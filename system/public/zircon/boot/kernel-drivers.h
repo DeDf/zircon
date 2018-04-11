@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include <zircon/boot/bootdata.h>
+#include <zircon/compiler.h>
+#include <stdint.h>
 
-// bootdata_kernel_driver_t types
+// BOOTDATA_KERNEL_DRIVER bootdata types
 #define KDRV_ARM_PSCI           0x49435350  // 'PSCI'
 #define KDRV_ARM_GIC_V2         0x32434947  // 'GIC2'
 #define KDRV_ARM_GIC_V3         0x33434947  // 'GIC3'
@@ -17,36 +18,69 @@
 #define KDRV_HISILICON_POWER    0x4F505348  // 'HSPO'
 #define KDRV_AMLOGIC_HDCP       0x484C4D41  // 'AMLH'
 
-// KDRV_ARM_PSCI parameter indices
-#define KDRV_ARM_PSCI_USE_SMC                   0
-#define KDRV_ARM_PSCI_SHUTDOWN_ARGS(i)          ((i) + 1)
-#define KDRV_ARM_PSCI_REBOOT_ARGS(i)            ((i) + 4)
-#define KDRV_ARM_PSCI_REBOOT_BOOTLOADER_ARGS(i) ((i) + 7)
+// for list of kernel drivers in the boot shim
+typedef struct {
+    uint32_t type;
+    uint32_t length;
+    const void* data;
+} boot_shim_kernel_driver_t;
 
-// KDRV_ARM_GIC_V2 parameter indices
-#define KDRV_ARM_GIC_V2_GICD_OFFSET             0
-#define KDRV_ARM_GIC_V2_GICC_OFFSET             1
-#define KDRV_ARM_GIC_V2_GICH_OFFSET             2
-#define KDRV_ARM_GIC_V2_GICV_OFFSET             3
-#define KDRV_ARM_GIC_V2_IPI_BASE                4
-#define KDRV_ARM_GIC_V2_OPTIONAL                5
-#define KDRV_ARM_GIC_V2_MSI_MMIO_PADDR          6
+// kernel driver struct that can be used for simple drivers
+// used by KDRV_PL011_UART, KDRV_AMLOGIC_UART and KDRV_NXP_IMX_UART
+typedef struct {
+    uint64_t mmio_phys;
+    uint32_t irq;
+} bootdata_kernel_driver_t;
 
-// KDRV_ARM_GIC_V3 parameter indices
-#define KDRV_ARM_GIC_V3_GICD_OFFSET             0
-#define KDRV_ARM_GIC_V3_GICR_OFFSET             1
-#define KDRV_ARM_GIC_V3_GICR_STRIDE             2
-#define KDRV_ARM_GIC_V3_IPI_BASE                3
-#define KDRV_ARM_GIC_V3_OPTIONAL                4
-#define KDRV_ARM_GIC_V3_MX8_GPR_PADDR           5
+// for KDRV_ARM_PSCI
+typedef struct {
+    bool use_hvc;
+    uint64_t shutdown_args[3];
+    uint64_t reboot_args[3];
+    uint64_t reboot_bootloader_args[3];
+} bootdata_arm_psci_driver_t;
 
-// KDRV_ARM_GENERIC_TIMER parameter indices
-#define KDRV_ARM_GENERIC_TIMER_IRQ_PHYS         0
-#define KDRV_ARM_GENERIC_TIMER_IRQ_VIRT         1
-#define KDRV_ARM_GENERIC_TIMER_IRQ_SPHYS        2
-#define KDRV_ARM_GENERIC_TIMER_FREQ_OVERRIDE    3
+// for KDRV_ARM_GIC_V2
+typedef struct {
+    uint64_t mmio_phys;
+    uint64_t msi_frame_phys;
+    uint64_t gicd_offset;
+    uint64_t gicc_offset;
+    uint64_t gich_offset;
+    uint64_t gicv_offset;
+    uint32_t ipi_base;
+    bool optional;
+    bool use_msi;
+} bootdata_arm_gicv2_driver_t;
 
-// KDRV_AMLOGIC_HDCP parameter indices
-#define KDRV_AMLOGIC_HDCP_PRESET_MMIO_PADDR     0
-#define KDRV_AMLOGIC_HDCP_HIU_MMIO_PADDR        1
-#define KDRV_AMLOGIC_HDCP_HDMITX_MMIO_PADDR     2
+// for KDRV_ARM_GIC_V3
+typedef struct {
+    uint64_t mmio_phys;
+    uint64_t gicd_offset;
+    uint64_t gicr_offset;
+    uint64_t gicr_stride;
+    uint64_t mx8_gpr_phys;
+    uint32_t ipi_base;
+    bool optional;
+} bootdata_arm_gicv3_driver_t;
+
+// for KDRV_ARM_GENERIC_TIMER
+typedef struct {
+    uint32_t irq_phys;
+    uint32_t irq_virt;
+    uint32_t irq_sphys;
+    uint32_t freq_override;
+} bootdata_arm_generic_timer_driver_t;
+
+// for KDRV_HISILICON_POWER
+typedef struct {
+    uint64_t sctrl_phys;
+    uint64_t pmu_phys;
+} bootdata_hisilicon_power_driver_t;
+
+// for KDRV_AMLOGIC_HDCP
+typedef struct {
+    uint64_t preset_phys;
+    uint64_t hui_phys;
+    uint64_t hdmitx_phys;
+} bootdata_amlogic_hdcp_driver_t;
